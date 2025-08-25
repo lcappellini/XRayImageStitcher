@@ -217,7 +217,5 @@ std::vector<Ort::Value> SuperPoint::runSession(cv::Mat img) {
         input_names, &input_tensor, 1,
         output_names, 2);
 
-    std::cout << "Done!" << std::endl;
-
     return output_tensors;
 }
