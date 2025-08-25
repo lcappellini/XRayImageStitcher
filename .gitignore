@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /XRayImageStitcher/dicomfile.hpp
 /XRayImageStitcher/dicomfile.cpp
+/XRayImageStitcher/dicomfile.cpp
+/XRayImageStitcher/dicomfile.hpp
