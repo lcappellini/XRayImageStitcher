@@ -1,6 +1,7 @@
 
 #include <vector>
 #include <onnxruntime_cxx_api.h>
+//#include "E:\TESI_ARCHIVE\XRayImageStitcher\XRayImageStitcher\packages\Microsoft.ML.OnnxRuntime.DirectML.1.21.0\build\native\include\dml_provider_factory.h"
 #include <opencv2/opencv.hpp>
 
 #define DESC_DIM 256
@@ -21,8 +22,12 @@ private:
         env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SuperPoint");
 
         Ort::SessionOptions session_options;
-        session_options.SetIntraOpNumThreads(1);
+        session_options.SetIntraOpNumThreads(4);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+
+        //Ort::ThrowOnError(
+        //    OrtSessionOptionsAppendExecutionProvider_DML(session_options, 0)
+        //);
 
         std::wstring ws(model_file_path.begin(), model_file_path.end());
         const wchar_t* model_path = ws.c_str();

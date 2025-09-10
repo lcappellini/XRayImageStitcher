@@ -6,16 +6,9 @@
 class ImageStitcher {
 
 public:
-    enum class HomographyMethod {
-        LSQ = 0,
-        RANSAC = cv::RANSAC,
-        LMEDS = cv::LMEDS,
-        PROSAC = cv::RHO
-    };
-
     enum class DetectorAlgorithm {
         SIFT,
-        SURF,
+        //SURF,
         ORB,
         BRISK,
         AKAZE,
@@ -27,6 +20,13 @@ public:
         BRUTEFORCE,
         FLANN,
         SUPERGLUE
+    };
+
+    enum class HomographyMethod {
+        LSQ = 0,
+        RANSAC = cv::RANSAC,
+        LMEDS = cv::LMEDS,
+        PROSAC = cv::RHO
     };
 
     enum class DescriptorType {
@@ -70,22 +70,23 @@ private:
     };
 
 private:
-    std::string superpoint_model_path = R"(C:\Users\Lorenzo\Desktop\TESI\Tesi Test Project\Tesi Test Project\Tesi Test Project\superglue\superpoint.onnx)";
-    std::string superglue_model_path = R"(C:\Users\Lorenzo\Desktop\TESI\Tesi Test Project\Tesi Test Project\Tesi Test Project\superglue\superglue_indoor.onnx)";
+    std::string superpoint_model_path = R"(C:\Users\Lorenzo\Desktop\TESI\XRayImageStitcher\XRayImageStitcher\XRayImageStitcher\superglue\superpoint.onnx)";
+    std::string superglue_model_path = R"(C:\Users\Lorenzo\Desktop\TESI\XRayImageStitcher\XRayImageStitcher\XRayImageStitcher\superglue\superglue_indoor.onnx)";
 
     std::vector<ImageData> sources;
+    cv::Mat result;
+    cv::Mat result_raw;
 
     float portionToAnalyse = 1.0f / 4.0f; //TODO should i make it customizable for every pair of images (?)
 
     cv::Mat load_image(const ImageData& imgData);
     bool get_img_from_source(ImageData& imgData, cv::Mat& out_img_work, cv::Mat& out_img_res, cv::Mat& out_img_raw);
-    cv::Mat dicom_to_cv_8(std::string path);
     cv::Mat cv16_to_cv8(cv::Mat img16);
     cv::Mat dicom_to_cv_16(std::string path);
 
     cv::Mat crop_image(const cv::Mat& img, const CroppingRect& crop);
 
-    bool apply_alpha_blending(const cv::Mat& img1_res, const cv::Mat& img2_res, cv::Mat& gray_out, std::vector<cv::Point2f>& corners_transformed, int overlap, cv::Mat& H);
+    int apply_alpha_blending(const cv::Mat& img1_res, const cv::Mat& img2_res, cv::Mat& gray_out, std::vector<cv::Point2f>& corners_transformed, int overlap, cv::Mat& H);
 
 public:
 	void newProcess();
@@ -99,8 +100,43 @@ public:
 
     unsigned int getNumberOfImages() const;
 
-    bool stitch(std::string outFilename,
+    int stitch(
         DetectorAlgorithm detectorAlgorithm = DetectorAlgorithm::SIFT,
         MatchingAlgorithm matchingAlgorithm = MatchingAlgorithm::BRUTEFORCE,
         HomographyMethod homographyMethod = HomographyMethod::RANSAC);
+    //TODO remove outFilename as parameter, the result image will be handled manually with getResult()
+
+    cv::Mat& getResult() {
+        return result;
+    }
+
+    cv::Mat& getResultRaw() {
+        return result_raw;
+    }
+
+
+//additional methods to get the process data
+public:
+    struct StitchData {
+        size_t nkp1;
+        size_t nkp2;
+        size_t knnMatches;
+        size_t goodMatches;
+        float hDist;
+        float overlap;
+
+        StitchData(int nkp1_, int nkp2_, int knnMatches_, int goodMatches_, float hDist_, float overlap_)
+            : nkp1(nkp1_), nkp2(nkp2_), knnMatches(knnMatches_), goodMatches(goodMatches_),
+            hDist(hDist_), overlap(overlap_) {
+        }
+    };
+
+    std::vector<StitchData> getStitchDataVec() {
+        return stitchDataVec;
+    }
+
+private:
+    float homographyDistanceFromTranslation(const cv::Mat& H);
+    std::vector<StitchData> stitchDataVec;
+
 };

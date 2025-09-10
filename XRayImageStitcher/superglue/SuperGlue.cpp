@@ -3,6 +3,7 @@
 
 cv::Ptr<SuperGlue> SuperGlue::instance = nullptr;
 
+
 void SuperGlue::parse_superglue_output(std::vector<Ort::Value>& superglue_tensors, std::vector<cv::DMatch>& matches) {
     float* scores = superglue_tensors[0].GetTensorMutableData<float>();
     auto output_shape = superglue_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
@@ -14,21 +15,14 @@ void SuperGlue::parse_superglue_output(std::vector<Ort::Value>& superglue_tensor
     std::vector<float> max0(N, -std::numeric_limits<float>::infinity());
     std::vector<float> max1(M, -std::numeric_limits<float>::infinity());
 
-    // get best kp1 for each kp0
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (int i = 0; i < N - 1; ++i) {
+        for (int j = 0; j < M - 1; ++j) {
             float val = scores[i * M + j];
             if (val > max0[i]) {
                 max0[i] = val;
                 indices0[i] = j;
             }
-        }
-    }
 
-    // get best kp0 for each kp1
-    for (int j = 0; j < M; j++) {
-        for (int i = 0; i < N; i++) {
-            float val = scores[i * M + j];
             if (val > max1[j]) {
                 max1[j] = val;
                 indices1[j] = i;
@@ -101,8 +95,8 @@ void SuperGlue::knnMatchImpl(cv::InputArray queryDescriptors, std::vector<std::v
         throw std::runtime_error("SuperGlue requires descriptors of size 256 (float32)");
     }
 
-    std::cout << query.size() << std::endl;
-    std::cout << train.size() << std::endl;
+    //std::cout << query.size() << std::endl;
+    //std::cout << train.size() << std::endl;
 
     descriptors0.reserve(N0 * 256);
     for (int c = 0; c < desc0_dim; c++) {
@@ -125,8 +119,8 @@ void SuperGlue::knnMatchImpl(cv::InputArray queryDescriptors, std::vector<std::v
         //}
     }
     std::vector<float> keypoints0_norm, keypoints1_norm;
-    keypoints0_norm = normalize_keypoints(keypoints0, imgW, imgH);
-    keypoints1_norm = normalize_keypoints(keypoints1, imgW, imgH);
+    keypoints0_norm = normalize_keypoints(keypoints0, img0W, img0H);
+    keypoints1_norm = normalize_keypoints(keypoints1, img1W, img1H);
     //
 
     // set input data
@@ -174,7 +168,7 @@ bool SuperGlue::isMaskSupported() const {
     return false;
 }
 
-void SuperGlue::init(const std::vector<cv::KeyPoint>& kpts0, const std::vector<cv::KeyPoint>& kpts1, int img_width, int img_height, int offsetx, int offsety, int descriptor_dim) {
+void SuperGlue::init(const std::vector<cv::KeyPoint>& kpts0, const std::vector<cv::KeyPoint>& kpts1, int img0_width, int img0_height, int img1_width, int img1_height, int offsetx, int offsety, int descriptor_dim) {
     keypoints0.clear();
     keypoints1.clear();
     scores0.clear();
@@ -197,8 +191,10 @@ void SuperGlue::init(const std::vector<cv::KeyPoint>& kpts0, const std::vector<c
         scores1.push_back(kp.response);
     }
 
-    imgW = img_width;
-    imgH = img_height;
+    img0W = img0_width;
+    img0H = img0_height;
+    img1W = img1_width;
+    img1H = img1_height;
     desc_dim = descriptor_dim;
 }
 

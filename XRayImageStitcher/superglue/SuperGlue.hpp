@@ -17,7 +17,7 @@ private:
         Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "SuperGlue");
 
         Ort::SessionOptions session_options;
-        session_options.SetIntraOpNumThreads(1);
+        session_options.SetIntraOpNumThreads(4);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
         std::wstring ws(model_file_path.begin(), model_file_path.end());
@@ -33,8 +33,10 @@ private:
     std::vector<float> keypoints1;
     std::vector<float> scores0;
     std::vector<float> scores1;
-    int imgW = 0;
-    int imgH = 0;
+    int img0W = 0;
+    int img0H = 0;
+    int img1W = 0;
+    int img1H = 0;
     int desc_dim = 0;
     
     float m_threshold = 0;
@@ -62,7 +64,7 @@ public:
     void init( //TODO RENAME THIS
         const std::vector<cv::KeyPoint>& kpts0,
         const std::vector<cv::KeyPoint>& kpts1,
-        int img_width, int img_height,
+        int img0_width, int img0_height, int img1_width, int img1_height,
         int offsetx = 0, int offsety = 0,
         int desc_dim = 256
     );
